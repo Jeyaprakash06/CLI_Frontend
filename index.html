@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Gateway</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .login-section, .command-section {
+            display: none;
+        }
+
+        .login-section.active, .command-section.active {
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .user-info h3 {
+            margin-bottom: 10px;
+        }
+
+        .user-info .stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 1.1em;
+        }
+
+        .result-box {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result-box.success {
+            border-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .result-box.error {
+            border-color: #f56565;
+            background: #fff5f5;
+        }
+
+        .result-box pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        table tr:hover {
+            background: #f7fafc;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-executed {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-rejected {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 2px solid #48bb78;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #f56565;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Command Gateway</h1>
+            <p>Secure command execution with rule-based access control</p>
+        </div>
+
+        <!-- Login Section -->
+        <div class="card login-section active" id="loginSection">
+            <h2>🔐 Login</h2>
+            <div class="input-group">
+                <label>API Key</label>
+                <input type="password" id="apiKeyInput" placeholder="Enter your API key">
+            </div>
+            <button class="btn btn-primary" onclick="login()">Login</button>
+            <div id="loginResult"></div>
+        </div>
+
+        <!-- Main Application -->
+        <div class="command-section" id="commandSection">
+            <!-- User Info -->
+            <div class="card">
+                <div class="user-info" id="userInfo">
+                    <h3>👤 User Information</h3>
+                    <div class="stat">
+                        <span>Username:</span>
+                        <span id="username">-</span>
+                    </div>
+                    <div class="stat">
+                        <span>Role:</span>
+                        <span id="role">-</span>
+                    </div>
+                    <div class="stat">
+                        <span>💰 Credits:</span>
+                        <span id="credits">-</span>
+                    </div>
+                </div>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="main-content">
+                <!-- Command Execution -->
+                <div class="card">
+                    <h2>⚡ Execute Command</h2>
+                    <div class="input-group">
+                        <label>Command</label>
+                        <input type="text" id="commandInput" placeholder='e.g., ls -la' onkeypress="if(event.key==='Enter') executeCommand()">
+                    </div>
+                    <button class="btn btn-primary" onclick="executeCommand()">Execute</button>
+                    <div id="commandResult"></div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <h2>🎯 Quick Actions</h2>
+                    <button class="btn btn-secondary" onclick="loadHistory()" style="width: 100%; margin-bottom: 10px;">📜 View History</button>
+                    <button class="btn btn-secondary" onclick="loadRules()" style="width: 100%; margin-bottom: 10px;">📋 View Rules</button>
+                    <button class="btn btn-secondary" onclick="loadUsers()" style="width: 100%; margin-bottom: 10px;">👥 View Users</button>
+                    <button class="btn btn-secondary" onclick="loadAudit()" style="width: 100%;">📊 View Audit Logs</button>
+                </div>
+            </div>
+
+            <!-- Admin Section -->
+            <div class="card" id="adminSection" style="display: none;">
+                <h2>⚙️ Admin Panel</h2>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('createUser')">Create User</button>
+                    <button class="tab" onclick="switchTab('addRule')">Add Rule</button>
+                    <button class="tab" onclick="switchTab('manageCredits')">Manage Credits</button>
+                </div>
+
+                <!-- Create User Tab -->
+                <div class="tab-content active" id="createUserTab">
+                    <div class="input-group">
+                        <label>Username</label>
+                        <input type="text" id="newUsername" placeholder="Enter username">
+                    </div>
+                    <div class="input-group">
+                        <label>Role</label>
+                        <select id="newUserRole" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                            <option value="member">Member</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="createUser()">Create User</button>
+                    <div id="createUserResult"></div>
+                </div>
+
+                <!-- Add Rule Tab -->
+                <div class="tab-content" id="addRuleTab">
+                    <div class="input-group">
+                        <label>Pattern (Regex)</label>
+                        <input type="text" id="rulePattern" placeholder="e.g., ^docker">
+                    </div>
+                    <div class="input-group">
+                        <label>Action</label>
+                        <select id="ruleAction" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                            <option value="AUTO_ACCEPT">AUTO_ACCEPT</option>
+                            <option value="AUTO_REJECT">AUTO_REJECT</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Description</label>
+                        <input type="text" id="ruleDescription" placeholder="What does this rule do?">
+                    </div>
+                    <button class="btn btn-primary" onclick="addRule()">Add Rule</button>
+                    <div id="addRuleResult"></div>
+                </div>
+
+                <!-- Manage Credits Tab -->
+                <div class="tab-content" id="manageCreditsTab">
+                    <div class="input-group">
+                        <label>User ID</label>
+                        <input type="number" id="creditUserId" placeholder="Enter user ID">
+                    </div>
+                    <div class="input-group">
+                        <label>New Credits</label>
+                        <input type="number" id="newCredits" placeholder="Enter credit amount">
+                    </div>
+                    <button class="btn btn-primary" onclick="updateCredits()">Update Credits</button>
+                    <div id="updateCreditsResult"></div>
+                </div>
+            </div>
+
+            <!-- Data Display -->
+            <div class="card">
+                <h2 id="dataTitle">📊 Data</h2>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Loading...</p>
+                </div>
+                <div id="dataDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const API_BASE = 'http://localhost:5000';
+    let apiKey = localStorage.getItem('apiKey') || '';
+    let currentUserRole = ''; // Store user role for conditional UI/access
+
+    // Initial check if already logged in
+    if (apiKey) {
+        checkAuth();
+    }
+
+    // Utility function to display messages
+    function showResult(elementId, message, type) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        
+        let formattedMessage = '';
+        if (message.includes('\n')) {
+            // For multi-line output (like command execution)
+            formattedMessage = `<div class="result-box ${type}"><pre>${message}</pre></div>`;
+        } else {
+            // For single-line alerts
+            formattedMessage = `<div class="alert alert-${type}">${message}</div>`;
+        }
+        el.innerHTML = formattedMessage;
+        
+        // Auto-hide alert after 5 seconds
+        if (type !== 'success' && type !== 'error') {
+            setTimeout(() => {
+                el.innerHTML = '';
+            }, 5000);
+        }
+    }
+
+    function showLoading(show) {
+        const loadingEl = document.getElementById('loading');
+        const displayEl = document.getElementById('dataDisplay');
+        if (show) {
+            loadingEl.classList.add('active');
+            displayEl.innerHTML = ''; // Clear previous data
+        } else {
+            loadingEl.classList.remove('active');
+        }
+    }
+
+    function updateCredits(newCredits) {
+        document.getElementById('credits').textContent = newCredits;
+    }
+
+    function showAdminControls(role) {
+        if (role === 'admin') {
+            document.getElementById('adminSection').style.display = 'block';
+        } else {
+            document.getElementById('adminSection').style.display = 'none';
+        }
+    }
+
+    async function login() {
+        apiKey = document.getElementById('apiKeyInput').value.trim();
+        if (!apiKey) {
+            showResult('loginResult', 'Please enter an API key', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/auth/me`, {
+                headers: { 'X-API-Key': apiKey }
+            });
+
+            if (response.ok) {
+                const user = await response.json();
+                localStorage.setItem('apiKey', apiKey);
+                showCommandSection(user);
+                showResult('loginResult', `✅ Logged in as ${user.username}`, 'success');
+            } else {
+                showResult('loginResult', '❌ Login failed: Invalid API key or server error', 'error');
+            }
+        } catch (error) {
+            showResult('loginResult', '❌ Cannot connect to server. Make sure backend is running!', 'error');
+        }
+    }
+
+    async function checkAuth() {
+        try {
+            const response = await fetch(`${API_BASE}/auth/me`, {
+                headers: { 'X-API-Key': apiKey }
+            });
+
+            if (response.ok) {
+                const user = await response.json();
+                showCommandSection(user);
+            } else {
+                logout();
+            }
+        } catch (error) {
+            logout();
+        }
+    }
+
+    function showCommandSection(user) {
+        document.getElementById('loginSection').classList.remove('active');
+        document.getElementById('commandSection').classList.add('active');
+        
+        document.getElementById('username').textContent = user.username;
+        document.getElementById('role').textContent = user.role;
+        document.getElementById('credits').textContent = user.credits;
+        currentUserRole = user.role;
+        showAdminControls(user.role);
+    }
+
+    function logout() {
+        localStorage.removeItem('apiKey');
+        apiKey = '';
+        currentUserRole = '';
+        document.getElementById('loginSection').classList.add('active');
+        document.getElementById('commandSection').classList.remove('active');
+        document.getElementById('apiKeyInput').value = '';
+        document.getElementById('adminSection').style.display = 'none';
+    }
+
+    // =========================================================================
+    // THE CRITICAL FIX: Command Router
+    // =========================================================================
+    async function executeCommand() {
+        const fullCommand = document.getElementById('commandInput').value.trim();
+        const parts = fullCommand.split(/\s+/);
+        const baseCommand = parts[0].toLowerCase();
+
+        if (!fullCommand) {
+            showResult('commandResult', 'Please enter a command', 'error');
+            return;
+        }
+
+        // Clear input after capturing command
+        document.getElementById('commandInput').value = ''; 
+        
+        // Route to dedicated functions based on the first word (like the CLI.py's main function)
+        switch (baseCommand) {
+            case 'whoami':
+                await loadWhoami();
+                break;
+            case 'history':
+                await loadHistory();
+                break;
+            case 'users':
+                await loadUsers();
+                break;
+            case 'rules':
+                await loadRules();
+                break;
+            case 'audit':
+                await loadAudit();
+                break;
+            case 'exec':
+                // For 'gateway exec "<command>"', remove 'exec' and join the rest
+                const commandText = parts.slice(1).join(' ');
+                await executeDirectCommand(commandText.replace(/"/g, '')); // Remove quotes
+                break;
+            default:
+                // Treat everything else as a direct shell command (like 'ls -la', 'echo hello')
+                await executeDirectCommand(fullCommand);
+                break;
+        }
+    }
+
+    async function executeDirectCommand(command) {
+        if (!command) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/commands`, {
+                method: 'POST',
+                headers: {
+                    'X-API-Key': apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ command_text: command })
+            });
+
+            const result = await response.json();
+            
+            if (response.status === 401) {
+                showResult('commandResult', '❌ Authentication Error: Invalid or missing API Key.', 'error');
+                return;
+            }
+
+            if (result.status === 'executed') {
+                showResult('commandResult', 
+                    `✅ Command executed! [Credits: ${result.credits}]\n\nOutput:\n${result.output}`, 
+                    'success');
+                updateCredits(result.credits);
+            } else if (result.status === 'rejected') {
+                showResult('commandResult', 
+                    `❌ Command rejected [Credits: ${result.credits}]\nReason: ${result.reason}`, 
+                    'error');
+                updateCredits(result.credits);
+            } else {
+                 showResult('commandResult', `❌ Error: ${result.error || 'Unknown error'}`, 'error');
+            }
+        } catch (error) {
+            showResult('commandResult', `❌ Error executing command: ${error.message}`, 'error');
+        }
+    }
+    // =========================================================================
+    // End of Command Router Fix
+    // =========================================================================
+    
+    async function loadWhoami() {
+        showLoading(true);
+        document.getElementById('dataTitle').textContent = '👤 Current User Info';
+
+        try {
+            const response = await fetch(`${API_BASE}/auth/me`, {
+                headers: { 'X-API-Key': apiKey }
+            });
+
+            if (response.ok) {
+                const user = await response.json();
+                document.getElementById('dataDisplay').innerHTML = `
+                    <p><strong>Username:</strong> ${user.username}</p>
+                    <p><strong>Role:</strong> ${user.role}</p>
+                    <p><strong>Credits:</strong> ${user.credits}</p>
+                `;
+                // Also update the main user info card
+                showCommandSection(user);
+            } else {
+                 document.getElementById('dataDisplay').innerHTML = '<div class="alert alert-error">Error fetching user info.</div>';
+            }
+        } catch (error) {
+            document.getElementById('dataDisplay').innerHTML = '<div class="alert alert-error">Error connecting to server.</div>';
+        }
+        showLoading(false);
+    }
+
+
+    async function loadHistory() {
+        showLoading(true);
+        document.getElementById('dataTitle').textContent = '📜 Command History';
+        
+        try {
+            const response = await fetch(`${API_BASE}/commands`, {
+                headers: { 'X-API-Key': apiKey }
+            });
+            const commands = await response.json();
+            
+            if (commands.length === 0) {
+                document.getElementById('dataDisplay').innerHTML = '<p>No commands yet</p>';
+            } else {
+                let table = '<table><thead><tr><th>ID</th><th>Command</th><th>Status</th><th>Time</th></tr></thead><tbody>';
+                commands.slice(0, 20).forEach(cmd => {
+                    const statusClass = cmd.status === 'executed' ? 'status-executed' : 'status-rejected';
+                    // Escape HTML in command_text for safety and to prevent table breakage
+                    const safeCommandText = cmd.command_text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    table += `<tr>
+                        <td>${cmd.id}</td>
+                        <td>${safeCommandText}</td>
+                        <td><span class="status-badge ${statusClass}">${cmd.status}</span></td>
+                        <td>${new Date(cmd.created_at).toLocaleString()}</td>
+                    </tr>`;
+                });
+                table += '</tbody></table>';
+                document.getElementById('dataDisplay').innerHTML = table;
+            }
+        } catch (error) {
+            document.getElementById('dataDisplay').innerHTML = '<div class="alert alert-error">Error loading history</div>';
+        }
+        showLoading(false);
+    }
+
+    async function loadRules() {
+        showLoading(true);
+        document.getElementById('dataTitle').textContent = '📋 Rules';
+        
+        try {
+            const response = await fetch(`${API_BASE}/rules`, {
+                headers: { 'X-API-Key': apiKey }
+            });
+            
+            if (response.status === 403) {
+                 document.getElementById('dataDisplay').innerHTML = '<div class="alert alert-error">Admin access required to view rules.</div>';
+                 showLoading(false);
+                 return;
+            }
+
+            const rules = await response.json();
+            
+            let table = '<table><thead><tr><th>ID</th><th>Pattern</th><th>Action</th><th>Description</th></tr></thead><tbody>';
+            rules.forEach(rule => {
+                const safePattern = rule.pattern.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                table += `<tr>
+                    <td>${rule.id}</td>
+                    <td><code>${safePattern}</code></td>
+                    <td>${rule.action}</td>
+                    <td>${rule.description || '-'}</td>
+                </tr>`;
+            });
+            table += '</tbody></table>';
+            document.getElementById('dataDisplay').innerHTML = table;
+        } catch (error) {
+            document.getElementById('dataDisplay').innerHTML = '<div class="alert alert-error">Error loading rules.</div>';
+        }
+        showLoading(false);
+    }
+    async function showAndCopyApiKey(username, apiKey) {
+    // 1. Display the message in a prominent, non-dismissible way (e.g., a modal or a static div)
+    const resultElement = document.getElementById('user-creation-result');
+    resultElement.innerHTML = `
+        <h3>✅ User '${username}' Created Successfully!</h3>
+        <p><strong>SECURITY WARNING:</strong> This API Key will only be displayed once. Copy it now!</p>
+        
+        <div style="
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            margin: 10px 0; 
+            background-color: #f9f9f9;
+            font-family: monospace;
+            word-break: break-all;
+        ">
+            ${apiKey}
+        </div>
+
+        <button id="copy-btn" class="btn btn-primary">Copy API Key to Clipboard</button>
+        <button class="btn btn-secondary" onclick="closeResultModal()">Done</button>
+    `;
+    // Show the container/modal
+    resultElement.style.display = 'block'; 
+
+    // 2. Attach the Copy to Clipboard logic
+    document.getElementById('copy-btn').onclick = async () => {
+        try {
+            await navigator.clipboard.writeText(apiKey);
+            document.getElementById('copy-btn').innerText = 'Copied! (Save it securely)';
+            document.getElementById('copy-btn').classList.remove('btn-primary');
+            document.getElementById('copy-btn').classList.add('btn-success');
+        } catch (err) {
+            console.error('Could not copy text: ', err);
+            alert('Failed to copy. Please manually select and copy the key.');
+        }
+    };
+}
+
+function closeResultModal() {
+    document.getElementById('user-creation-result').style.display = 'none';
+}
+
+
+    
+    async function loadUsers() {
+        showLoading(true);
+        document.getElementById('dataTitle').textContent = '👥 Users';
+        try {
+            const response = await fetch(`${API_BASE}/users`, {
+                headers: { 'X-API-Key': apiKey }
+            });
+            
+            if (response.status === 403) {
+                document.getElementById('dataDisplay').innerHTML = '<div class="alert alert-error">Admin access required to view users.</div>';
+                showLoading(false);
+                return;
+            }
+            
+            const users = await response.json(); 
+            let table = '<table><thead><tr><th>ID</th><th>Username</th><th>Role</th><th>Credits</th></tr></thead><tbody>';
+            users.forEach(user => {
+                table += `<tr>
+                    <td>${user.id}</td>
+                    <td>${user.username}</td>
+                    <td>${user.role}</td>
+                    <td>${user.credits}</td>
+                </tr>`;
+            });
+            table += '</tbody></table>';
+            document.getElementById('dataDisplay').innerHTML = table;
+        } catch (error) {
+            document.getElementById('dataDisplay').innerHTML = '<div class="alert alert-error">Error loading users.</div>';
+        }
+        showLoading(false);
+    }
+
+    async function loadAudit() {
+        showLoading(true);
+        document.getElementById('dataTitle').textContent = '📊 Audit Logs';
+
+        try {
+            const response = await fetch(`${API_BASE}/audit`, {
+                headers: { 'X-API-Key': apiKey }
+            });
+            
+            if (response.status === 403) {
+                 document.getElementById('dataDisplay').innerHTML = '<div class="alert alert-error">Admin access required to view audit logs.</div>';
+                 showLoading(false);
+                 return;
+            }
+
+            const logs = await response.json();
+            
+            if (logs.length === 0) {
+                document.getElementById('dataDisplay').innerHTML = '<p>No audit logs yet</p>';
+            } else {
+                let table = '<table><thead><tr><th>User</th><th>Action</th><th>Details</th><th>Time</th></tr></thead><tbody>';
+                logs.slice(0, 30).forEach(log => {
+                    const safeDetails = log.details.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 50) + (log.details.length > 50 ? '...' : '');
+                    table += `<tr>
+                        <td>${log.username}</td>
+                        <td>${log.action}</td>
+                        <td>${safeDetails}</td>
+                        <td>${new Date(log.created_at).toLocaleString()}</td>
+                    </tr>`;
+                });
+                table += '</tbody></table>';
+                document.getElementById('dataDisplay').innerHTML = table;
+            }
+        } catch (error) {
+            document.getElementById('dataDisplay').innerHTML = '<div class="alert alert-error">Error loading audit logs.</div>';
+        }
+        showLoading(false);
+    }
+    
+    // Admin functions need a client-side check as well
+    function checkAdminAccess(resultElementId) {
+        if (currentUserRole !== 'admin') {
+            showResult(resultElementId, '❌ Permission denied. Admin privileges required.', 'error');
+            return false;
+        }
+        return true;
+    }
+
+    async function createUser() {
+        const username = document.getElementById('newUsername').value.trim();
+        const role = document.getElementById('newUserRole').value;
+        const resultElId = 'createUserResult';
+
+        if (!checkAdminAccess(resultElId) || !username) {
+            if (!username) showResult(resultElId, 'Please enter a username.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/users`, {
+                method: 'POST',
+                headers: {
+                    'X-API-Key': apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, role })
+            });
+
+            const result = await response.json();
+
+            if (response.status === 201) {
+                showResult(resultElId, `✅ User created: ${result.username} (Role: ${result.role})\n\n🔑 API Key: ${result.api_key}\n\n⚠️ SAVE THIS KEY!`, 'success');
+            } else {
+                showResult(resultElId, `❌ Error creating user: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            showResult(resultElId, `❌ Network Error: ${error.message}`, 'error');
+        }
+    }
+
+    async function addRule() {
+        const pattern = document.getElementById('rulePattern').value.trim();
+        const action = document.getElementById('ruleAction').value;
+        const description = document.getElementById('ruleDescription').value.trim();
+        const resultElId = 'addRuleResult';
+
+        if (!checkAdminAccess(resultElId) || !pattern) {
+            if (!pattern) showResult(resultElId, 'Please enter a regex pattern.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/rules`, {
+                method: 'POST',
+                headers: {
+                    'X-API-Key': apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ pattern, action, description })
+            });
+
+            const result = await response.json();
+
+            if (response.status === 201) {
+                showResult(resultElId, `✅ Rule created with ID ${result.id}`, 'success');
+                loadRules(); // Refresh the rules list
+            } else {
+                showResult(resultElId, `❌ Error adding rule: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            showResult(resultElId, `❌ Network Error: ${error.message}`, 'error');
+        }
+    }
+
+    async function updateCredits() {
+        const userId = parseInt(document.getElementById('creditUserId').value.trim());
+        const credits = parseInt(document.getElementById('newCredits').value.trim());
+        const resultElId = 'updateCreditsResult';
+
+        if (!checkAdminAccess(resultElId) || isNaN(userId) || isNaN(credits)) {
+            if (isNaN(userId) || isNaN(credits)) showResult(resultElId, 'Please enter valid numbers for User ID and Credits.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/users/${userId}/credits`, {
+                method: 'PATCH',
+                headers: {
+                    'X-API-Key': apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ credits })
+            });
+
+            const result = await response.json();
+
+            if (response.status === 200) {
+                showResult(resultElId, `✅ Credits updated for user ${userId}. New balance: ${result.credits}`, 'success');
+                loadUsers(); // Refresh the users list
+            } else {
+                showResult(resultElId, `❌ Error updating credits: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            showResult(resultElId, `❌ Network Error: ${error.message}`, 'error');
+        }
+    }
+    
+    function switchTab(tabName) {
+        // Remove active class from all tabs and tab content
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        // Add active class to the selected tab and content
+        event.target.classList.add('active');
+        document.getElementById(tabName + 'Tab').classList.add('active');
+        
+        // Clear previous results
+        document.getElementById('createUserResult').innerHTML = '';
+        document.getElementById('addRuleResult').innerHTML = '';
+        document.getElementById('updateCreditsResult').innerHTML = '';
+    }
+
+</script>
+</body>
+</html>
